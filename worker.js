@@ -22,7 +22,7 @@ export default {
       // so you can add the correct Origin header to make the API server think
       // that this request is not cross-site.
       const newRequest = new Request(targetUrl, request);
-      newRequest.headers.set("Origin", new URL(apiUrl).origin);
+      newRequest.headers.set("Origin", new URL(targetUrl).origin);
       newRequest.headers.set('x-perdiem-key',null);
       targetUrl.includes('https://api.gsa.gov') && newRequest.headers.set('x-api-key',env.GSA_KEY)
       let response = await fetch(newRequest);
