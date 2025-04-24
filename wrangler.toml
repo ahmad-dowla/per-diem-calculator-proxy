@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2025-04-23"
 
 routes = [
-  { pattern = "proxy.perdiemcalc.org/*", zone_name = "perdiemcalc.org" },
+  { pattern = "*proxy.perdiemcalc.org/*", zone_name = "perdiemcalc.org" },
 ]
 
 [observability]
