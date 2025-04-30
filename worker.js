@@ -25,7 +25,7 @@ export default {
       newRequest.headers.set("Origin", new URL(targetUrl).origin);
       newRequest.headers.set('x-perdiem-key',null);
       targetUrl.includes('https://api.gsa.gov') && newRequest.headers.set('x-api-key',env.GSA_KEY)
-      let response = await fetch(newRequest);
+      let response = await fetch(newRequest,  { cache: 'no-store'});
       // Recreate the response so you can modify the headers
 
       response = new Response(response.body, response);
