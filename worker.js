@@ -1,3 +1,5 @@
+// Slightly modified--removed HTML landing page, proxy endpoint, required API key for incoming requests, added API key for outgoing requests to GSA-- from https://developers.cloudflare.com/workers/examples/cors-header-proxy/
+
 export default {
   async fetch(request, env) {
     const corsHeaders = {
