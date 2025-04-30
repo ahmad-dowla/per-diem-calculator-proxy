@@ -58,14 +58,15 @@ export default {
                 `Response for request url: ${request.url} not present in cache. Fetching and caching request.`,
             );
 
-            let remoteResponse = await fetchRemoteUrl(cacheUrl, corsHeaders);
+            let remoteResponse = await fetchRemoteUrl(cacheUrl, env.GSA_KEY);
 
             response = new Response(remoteResponse.body, {
                 status: remoteResponse.status,
                 headers: {
                     ...remoteResponse.headers,
                     ...corsHeaders,
-                    'Cache-Control': 'public, max-age=120, s-maxage=120',
+                    'Cache-Control':
+                        'public, max-age=2592000, s-maxage=2592000',
                     // Add timestamp to the response headers
                     'X-Response-Time': new Date().toISOString(),
                 },
@@ -79,12 +80,12 @@ export default {
     },
 };
 
-async function fetchRemoteUrl(url) {
+async function fetchRemoteUrl(url, GSA_KEY) {
     // If request is to GSA API, include the GSA API key
     return url.includes('api.gsa.gov')
         ? await fetch(url, {
               headers: {
-                  'x-api-key': env.GSA_KEY,
+                  'x-api-key': GSA_KEY,
               },
           })
         : await fetch(url);
