@@ -1,7 +1,6 @@
 name = "per-diem-proxy"
 main = "worker.js"
 compatibility_date = "2025-04-23"
-preview_urls = false
 
 routes = [
   { pattern = "*proxy.perdiemcalc.org/*", zone_name = "perdiemcalc.org" },
