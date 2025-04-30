@@ -1,85 +1,92 @@
+/**
+ * Use Cloudflare Workers as a serverless proxy.
+ *
+ * @see https://www.conroyp.com/articles/serverless-api-caching-cloudflare-workers-json-cors-proxy
+ */
+
 export default {
-  async fetch(request, env) {
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-      "Access-Control-Max-Age": "86400",
-    };
+    // The fetch handler is invoked when this worker receives a HTTP(S) request
+    // and should return a Response (optionally wrapped in a Promise)
+    async fetch(request, env, ctx) {
+        const url = new URL(request.url);
+        const targetUrl = url.searchParams.get('url');
 
-    async function handleRequest(request) {
-      const url = new URL(request.url);
-      let targetUrl = url.searchParams.get("url");
+        if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
+            return new Response('Missing API key', { status: 400 });
+        }
 
-      if (targetUrl === null) {
-        throw new Error('URL missing.');
-      }
+        if (!targetUrl) {
+            return new Response('Missing "url" query parameter', {
+                status: 400,
+            });
+        }
 
-      if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
-        throw new Error('Invalid API key.');
-      }
+        const corsHeaders = {
+            'Access-Control-Allow-Origin': '*', // Allow access from all domains
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        };
 
-      // Rewrite request to point to API URL. This also makes the request mutable
-      // so you can add the correct Origin header to make the API server think
-      // that this request is not cross-site.
-      const newRequest = new Request(targetUrl, request);
-      newRequest.headers.set("Origin", new URL(targetUrl).origin);
-      newRequest.headers.set('x-perdiem-key',null);
-      targetUrl.includes('https://api.gsa.gov') && newRequest.headers.set('x-api-key',env.GSA_KEY)
-      let response = await fetch(newRequest);
-      // Recreate the response so you can modify the headers
+        // If it's an OPTIONS request, respond with 204 immediately
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                status: 204,
+                headers: corsHeaders,
+            });
+        }
 
-      response = new Response(response.body, response);
-      // Set CORS headers
+        const cacheUrl = url;
+        const now = new Date();
 
-      response.headers.set("Access-Control-Allow-Origin", '*');
+        // Construct the cache key from the cache URL and current month/year, ensuring cache fetches new data at start of each month
+        const cacheKey = new Request(
+            `${cacheUrl.toString()}-${now.getUTCFullYear()}-${(
+                now.getUTCMonth() + 1
+            )
+                .toString()
+                .padStart(2, '0')}`,
+            request,
+        );
+        const cache = caches.default;
 
-      // Append to/Add Vary header so browser will cache response correctly
-      response.headers.append("Vary", "Origin");
+        // Check whether the value is already available in the cache
+        // If not, fetch it from origin, and store it in the cache
+        let response = await cache.match(cacheKey);
 
-      return response;
-    }
+        if (!response) {
+            console.log(
+                `Response for request url: ${request.url} not present in cache. Fetching and caching request.`,
+            );
 
-    async function handleOptions(request) {
-      if (
-        request.headers.get("Origin") !== null &&
-        request.headers.get("Access-Control-Request-Method") !== null &&
-        request.headers.get("Access-Control-Request-Headers") !== null
-      ) {
-        // Handle CORS preflight requests.
-        return new Response(null, {
-          headers: {
-            ...corsHeaders,
-            "Access-Control-Allow-Headers": request.headers.get(
-              "Access-Control-Request-Headers",
-            ),
-          },
-        });
-      } else {
-        // Handle standard OPTIONS request.
-        return new Response(null, {
-          headers: {
-            Allow: "GET, HEAD, POST, OPTIONS",
-          },
-        });
-      }
-    }
+            let remoteResponse = await fetchRemoteUrl(cacheUrl, env.GSA_KEY);
 
-      if (request.method === "OPTIONS") {
-        // Handle CORS preflight requests
-        return handleOptions(request);
-      } else if (
-        request.method === "GET" ||
-        request.method === "HEAD" ||
-        request.method === "POST"
-      ) {
-        // Handle requests to the API server
-        return handleRequest(request);
-      } else {
-        return new Response(null, {
-          status: 405,
-          statusText: "Method Not Allowed",
-        });
-      }
+            response = new Response(remoteResponse.body, {
+                status: remoteResponse.status,
+                headers: {
+                    ...remoteResponse.headers,
+                    ...corsHeaders,
+                    'Cache-Control':
+                        'public, max-age=2592000, s-maxage=2592000',
+                    // Add timestamp to the response headers
+                    'X-Response-Time': new Date().toISOString(),
+                },
+            });
 
-  },
+            // Into the cache we go!
+            ctx.waitUntil(cache.put(cacheKey, response.clone()));
+        }
+
+        return response;
+    },
 };
+
+async function fetchRemoteUrl(url, GSA_KEY) {
+    // If request is to GSA API, include the GSA API key
+    return url.includes('api.gsa.gov')
+        ? await fetch(url, {
+              headers: {
+                  'x-api-key': GSA_KEY,
+              },
+          })
+        : await fetch(url);
+}
