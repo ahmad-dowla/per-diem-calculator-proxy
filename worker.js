@@ -5,7 +5,7 @@ export default {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-      'Access-Control-Allow-Headers': 'Content-Type',      "Access-Control-Max-Age": "86400",
+      "Access-Control-Max-Age": "86400",
     };
 
     async function handleRequest(request) {
@@ -31,7 +31,7 @@ export default {
       response = new Response(response.body, response);
       // Set CORS headers
 
-      response.headers.set("Access-Control-Allow-Origin", '*');
+      response.headers.set("Access-Control-Allow-Origin", url.origin);
 
       // Append to/Add Vary header so browser will cache response correctly
       response.headers.append("Vary", "Origin");
