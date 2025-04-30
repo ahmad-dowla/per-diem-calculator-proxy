@@ -58,6 +58,7 @@ export default {
         // Handle standard OPTIONS request.
         return new Response(null, {
           headers: {
+            ...corsHeaders,
             Allow: "GET, HEAD, POST, OPTIONS",
           },
         });
