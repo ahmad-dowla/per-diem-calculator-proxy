@@ -1,85 +1,47 @@
-// Slightly modified--removed HTML landing page, proxy endpoint, required API key for incoming requests, added API key for outgoing requests to GSA-- from https://developers.cloudflare.com/workers/examples/cors-header-proxy/
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
 
-export default {
-  async fetch(request, env) {
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-      "Access-Control-Max-Age": "86400",
-    };
+async function handleRequest(request) {
+  const url = new URL(request.url)
+  const targetUrl = url.searchParams.get('url') // Get the target URL from the `url` query parameter
 
-    async function handleRequest(request) {
-      const url = new URL(request.url);
-      let targetUrl = url.searchParams.get("url");
+  if (!targetUrl) {
+    return new Response('Missing "url" query parameter', { status: 400 })
+  }
 
-      if (targetUrl === null) {
-        throw new Error('URL missing.');
-      }
+  if (request.headers.get("x-perdiem-key") !== env.PROXY_KEY) {
+    return new Response('Invalid API key', { status: 400 })
+  }
 
-      if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
-        throw new Error('Invalid API key.');
-      }
+  // Clone headers
+  const headers = new Headers(request.headers)
 
-      // Rewrite request to point to API URL. This also makes the request mutable so you can add the correct Origin header to make the API server think that this request is not cross-site.
-      const newRequest = new Request(targetUrl, request);
-      newRequest.headers.set("Origin", new URL(targetUrl).origin);
-      newRequest.headers.set('x-perdiem-key',null);
-      targetUrl.includes('https://api.gsa.gov') && newRequest.headers.set('x-api-key',env.GSA_KEY)
-      let response = await fetch(newRequest,  { cache: 'no-store'});
-      // Recreate the response so you can modify the headers
+  // Create a request for the target URL
+  const targetRequest = new Request(targetUrl, {
+    method: request.method,
+    headers: headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
+  })
 
-      response = new Response(response.body, response);
-      // Set CORS headers
+  // If request is to GSA, include the GSA API key
+  targetUrl.includes("https://api.gsa.gov") && targetRequest.headers.set("x-api-key", env.GSA_KEY);
+  
 
-      response.headers.set("Access-Control-Allow-Origin", '*');
+  try {
+    const response = await fetch(targetRequest)
 
-      // Append to/Add Vary header so browser will cache response correctly
-      response.headers.append("Vary", "Origin");
+    // Add CORS headers to allow all origins
+    const newHeaders = new Headers(response.headers)
+    newHeaders.set('Access-Control-Allow-Origin', '*')
+    newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    newHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
-      return response;
-    }
-
-    async function handleOptions(request) {
-      if (
-        request.headers.get("Origin") !== null &&
-        request.headers.get("Access-Control-Request-Method") !== null &&
-        request.headers.get("Access-Control-Request-Headers") !== null
-      ) {
-        // Handle CORS preflight requests.
-        return new Response(null, {
-          headers: {
-            ...corsHeaders,
-            "Access-Control-Allow-Headers": request.headers.get(
-              "Access-Control-Request-Headers",
-            ),
-          },
-        });
-      } else {
-        // Handle standard OPTIONS request.
-        return new Response(null, {
-          headers: {
-            Allow: "GET, HEAD, POST, OPTIONS",
-          },
-        });
-      }
-    }
-
-      if (request.method === "OPTIONS") {
-        // Handle CORS preflight requests
-        return handleOptions(request);
-      } else if (
-        request.method === "GET" ||
-        request.method === "HEAD" ||
-        request.method === "POST"
-      ) {
-        // Handle requests to the API server
-        return handleRequest(request);
-      } else {
-        return new Response(null, {
-          status: 405,
-          statusText: "Method Not Allowed",
-        });
-      }
-
-  },
-};
+    return new Response(response.body, {
+      status: response.status,
+      headers: newHeaders
+    })
+  } catch (error) {
+    return new Response('Error fetching the target URL', { status: 500 })
+  }
+}
