@@ -18,9 +18,7 @@ export default {
         throw new Error('Invalid API key.');
       }
 
-      // Rewrite request to point to API URL. This also makes the request mutable
-      // so you can add the correct Origin header to make the API server think
-      // that this request is not cross-site.
+      // Rewrite request to point to API URL. This also makes the request mutable so you can add the correct Origin header to make the API server think that this request is not cross-site.
       const newRequest = new Request(targetUrl, request);
       newRequest.headers.set("Origin", new URL(targetUrl).origin);
       newRequest.headers.set('x-perdiem-key',null);
@@ -31,7 +29,7 @@ export default {
       response = new Response(response.body, response);
       // Set CORS headers
 
-      response.headers.set("Access-Control-Allow-Origin", '*');
+      response.headers.set("Access-Control-Allow-Origin", url.origin);
 
       // Append to/Add Vary header so browser will cache response correctly
       response.headers.append("Vary", "Origin");
