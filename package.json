@@ -1,6 +1,5 @@
 {
     "name": "@per-diem-calculator/proxy",
-    "private": false,
     "version": "1.0.0",
     "author": "Ahmad Dowla <ahmad.dowla@gmail.com>",
     "description": "CORS and API proxy Cloudflare worker for @per-diem-calculator to pull rates from GSA, State Dept., and DOD.",
