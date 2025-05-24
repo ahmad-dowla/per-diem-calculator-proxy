@@ -1,12 +1,32 @@
 {
-  "name": "cors-proxy",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "deploy": "wrangler deploy",
-    "devserver": "wrangler dev"
-  },
-  "dependencies": {
-    "wrangler": "^4.12.0"
-  }
+    "name": "@per-diem-calculator/proxy",
+    "version": "1.0.0",
+    "author": "Ahmad Dowla <ahmad.dowla@gmail.com>",
+    "description": "CORS and API proxy Cloudflare worker for @per-diem-calculator to pull rates from GSA, State Dept., and DOD.",
+    "license": "MIT",
+    "homepage": "https://github.com/ahmad-dowla/per-diem-calculator-proxy",
+    "bugs": {
+        "url": "https://github.com/ahmad-dowla/per-diem-calculator-proxy/issues"
+    },
+    "keywords": [
+        "per diem",
+        "CORS proxy",
+        "API proxy",
+        "GSA",
+        "State Dept",
+        "DOD",
+        "calculator",
+        "expense report"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ahmad-dowla/per-diem-calculator-proxy.git"
+    },
+    "scripts": {
+        "deploy": "wrangler deploy",
+        "devserver": "wrangler dev"
+    },
+    "dependencies": {
+        "wrangler": "^4.12.0"
+    }
 }
