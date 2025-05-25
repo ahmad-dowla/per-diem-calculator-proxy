@@ -1,7 +1,7 @@
 export default {
     async fetch(request, env, ctx) {
         const corsHeaders = {
-            'Access-Control-Allow-Origin': 'https://perdiemcalc.org',
+            'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET,OPTIONS',
         };
 
