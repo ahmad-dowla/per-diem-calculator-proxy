@@ -2,10 +2,6 @@ name = "per-diem-calculator-proxy"
 main = "worker.js"
 compatibility_date = "2025-04-23"
 
-routes = [
-  { pattern = "*proxy.perdiemcalc.org/*", zone_name = "perdiemcalc.org" },
-]
-
 [observability]
 enabled = true
 head_sampling_rate = 1 # optional. default = 1.
