@@ -1,7 +1,10 @@
 export default {
     async fetch(request, env, ctx) {
         const corsHeaders = {
-            'Access-Control-Allow-Origin': 'https://perdiemcalc.org',
+            /// Unrestricted
+            /// In production, restrict access to your calculator's domain. E.g.:
+            /// 'Access-Control-Allow-Origin': 'https://perdiemcalc.org'
+            'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET,OPTIONS',
         };
 
