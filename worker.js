@@ -34,26 +34,33 @@ export default {
                 targetUrl.includes('https://api.gsa.gov') &&
                     newRequest.headers.set('x-api-key', env.GSA_KEY);
                 response = await fetch(newRequest);
-                // Recreate the response so you can modify the headers
 
-                response = new Response(response.body, response);
-                // Set CORS headers
+                if (response.ok) {
+                    // Recreate the response so you can modify the headers
 
-                response.headers.set('Access-Control-Allow-Origin', '*');
-                response.headers.set(
-                    'Cache-Control',
-                    'public, max-age=21600, s-maxage=21600',
-                ); // Cache for 6 hours
-                response.headers.set(
-                    'X-Response-Time',
-                    new Date().toISOString(),
-                );
+                    response = new Response(response.body, response);
+                    // Set CORS headers
 
-                // Append to/Add Vary header so browser will cache response correctly
-                response.headers.append('Vary', 'Origin');
+                    response.headers.set('Access-Control-Allow-Origin', '*');
+                    response.headers.set(
+                        'Cache-Control',
+                        'public, max-age=21600, s-maxage=21600',
+                    ); // Cache for 6 hours
+                    response.headers.set(
+                        'X-Response-Time',
+                        new Date().toISOString(),
+                    );
 
-                // Cache response
-                ctx.waitUntil(cache.put(cacheKey, response.clone()));
+                    // Append to/Add Vary header so browser will cache response correctly
+                    response.headers.append('Vary', 'Origin');
+
+                    // Cache response
+                    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+                } else {
+                    setTimeout(() => {
+                        handleRequest(request);
+                    }, 500);
+                }
             }
 
             return response;
