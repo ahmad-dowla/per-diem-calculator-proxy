@@ -13,9 +13,9 @@ export default {
                 throw new Error('URL missing.');
             }
 
-            if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
-                throw new Error('Invalid API key.');
-            }
+            // if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
+            //     throw new Error('Invalid API key.');
+            // }
 
             const cacheKey = targetUrl.toString();
             const cache = caches.default;
