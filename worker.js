@@ -1,7 +1,7 @@
 export default {
     async fetch(request, env, ctx) {
         const corsHeaders = {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': 'https://perdiemcalc.org',
             'Access-Control-Allow-Methods': 'GET,OPTIONS',
         };
 
@@ -13,9 +13,9 @@ export default {
                 throw new Error('URL missing.');
             }
 
-            // if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
-            //     throw new Error('Invalid API key.');
-            // }
+            if (request.headers.get('x-perdiem-key') !== env.PROXY_KEY) {
+                throw new Error('Invalid API key.');
+            }
 
             const cacheKey = targetUrl.toString();
             const cache = caches.default;
